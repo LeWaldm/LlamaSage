@@ -49,9 +49,15 @@ def main(question, agent_ids, rounds):
         ])
 
     # question loop 
-    mode = 'only_previous_round'
-    if mode == 'only_previous_round':
+    mode = 'all_previous_replies'
+    if mode == 'all_previous_replies':
+        """ each agent has as context all previous answers from all agents."""
+
+
         for round in range(rounds):
+            print(f'\n\n=====================================')
+            print(f'Round {round + 1}')
+            print(f'=====================================')
             for i, agent_context in enumerate(agent_contexts):
 
                 if round != 0:
@@ -67,13 +73,19 @@ def main(question, agent_ids, rounds):
                     messages=answer_context,
                     n=1)
 
-                # construct assitant message
+                # construct assistant message
                 content = completion.choices[0].message.content
                 assistant_message = {"role": "assistant", "content": content}
                 agent_context.append(assistant_message)
-                print(completion)
+
+                # feedback
+                print('\n\n-----------------------------')
+                print(f'{agent_ids[i]} says:')
+                print('-----------------------------')
+                print(content)
     else:
         raise KeyError(f"mode {mode} not implemented")
+
 
 if __name__ == "__main__":
 
