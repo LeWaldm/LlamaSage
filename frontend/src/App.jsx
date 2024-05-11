@@ -15,12 +15,6 @@ import {
 import personas from './persona.json';
 
 export default function App() {
-  useEffect(() => {
-    console.log(personas);
-    for (const key in personas) {
-      console.log(key);
-    }
-  }, []);
   const [texts, setTexts] = useState([
     {
       user: 'Socrates',
@@ -39,14 +33,37 @@ export default function App() {
       text: 'The only true wisdom is in knowing you know nothing.'
     },
   ])
-  const [agents, setAgents] = useState([
-    'Socrates', 'Lawyer', 'Aristotle'
-  ])
+  const [agents, setAgents] = useState([])
   const [discussionStarted, setDiscussionStarted] = useState(false)
+  const [activeAgents, setActiveAgents] = useState([])
+  const [dilemma, setDilemma] = useState('')
+
+  useEffect(() => {  
+    // Collect all keys or desired data from personas
+    const newAgents = [];
+    for (const key in personas) {
+      newAgents.push(key);  // assuming you want to store the key in agents
+    }
+  
+    // Set the new state once after the loop
+    setAgents(newAgents);
+  }, []);  // Empty dependency array ensures this effect runs only once after the initial render
+  
 
   const startDiscussion = () => {
     setDiscussionStarted(true)
   }
+
+  const handleChange = (e, value) => {
+    if(e.target.checked){
+      const newActiveAgents = [...activeAgents, value]
+      setActiveAgents(newActiveAgents)
+    } else {
+      const newActiveAgents = activeAgents.filter(agent => agent !== value)
+      setActiveAgents(newActiveAgents)
+    }
+  }
+
   return (
     <MDBContainer fluid className="py-5 gradient-custom">
       <MDBRow className="text-center mb-3">
@@ -55,14 +72,18 @@ export default function App() {
         </h1>
       </MDBRow>
       <MDBRow className="mb-3">
-          <MDBCol size='9'>
-              <MDBTextArea className="mb-3" label="Dilemma to ponder" id="textAreaExample" rows={4} />
+          <MDBCol size='6'>
+              <MDBTextArea className="mb-3" label="Dilemma to ponder" id="textAreaExample" rows={4} onChange={(e)=>setDilemma(e.target.value)} />
           </MDBCol>
-          <MDBCol size='3'>
-            <h5>Select agents for participation</h5>
-            <MDBCheckbox label="Socrates" id="checkbox1" />
-            <MDBCheckbox label="Lawyer" id="checkbox1" />
-            <MDBCheckbox label="Aristotle" id="checkbox1" />
+          <MDBCol size='6'>
+            <MDBRow>
+              <h5>Select agents for participation</h5>
+            </MDBRow>
+            <MDBRow>
+              {agents.map((value, index) => {
+                return <MDBCheckbox label={value} key={index} onChange={e => handleChange(e, value)}/>
+              })}
+            </MDBRow>
           </MDBCol>
       </MDBRow>
       <MDBRow className="text-center mb-3">

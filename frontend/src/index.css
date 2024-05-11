@@ -1,6 +1,8 @@
 .gradient-custom {
   /* fallback for old browsers */
   background: #fccb90;
+  min-height: 100vh;
+  height: 100%;
 
   /* Chrome 10-25, Safari 5.1-6 */
   background: -webkit-linear-gradient(
