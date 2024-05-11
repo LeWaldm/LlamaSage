@@ -78,6 +78,14 @@ export default function App() {
     }
   }
 
+  const chunkArray = (arr, chunkSize) => {
+    let result = [];
+    for (let i = 0; i < arr.length; i += chunkSize) {
+      result.push(arr.slice(i, i + chunkSize));
+    }
+    return result;
+  };
+
   return (
     <MDBContainer fluid className="py-5 gradient-custom">
       <MDBRow className="text-center mb-3">
@@ -87,15 +95,20 @@ export default function App() {
       </MDBRow>
       <MDBRow className="mb-3">
           <MDBCol size='6'>
-              <MDBTextArea className="mb-3" label="Dilemma to ponder" id="textAreaExample" rows={4} onChange={(e)=>setDilemma(e.target.value)} />
+              <MDBTextArea className="mb-3" label="Dilemma to ponder" id="textAreaExample" rows={7} onChange={(e)=>setDilemma(e.target.value)} />
           </MDBCol>
           <MDBCol size='6'>
             <MDBRow>
-              <h5>Select agents for participation</h5>
+              <h6>Select agents for participation</h6>
             </MDBRow>
             <MDBRow>
-              {agents.map((value, index) => {
-                return <MDBCheckbox label={value} key={index} onChange={e => handleChange(e, value)}/>
+              {chunkArray(agents, 3).map((value, index) => {
+                return (
+                  <MDBCol size='3'>
+                    <MDBCheckbox label={value[0]} key={index*3 + 0} onChange={e => handleChange(e, value[0])}/>
+                    <MDBCheckbox label={value[1]} key={index*3 + 1} onChange={e => handleChange(e, value[1])}/>
+                    <MDBCheckbox label={value[2]} key={index*3 + 2} onChange={e => handleChange(e, value[2])}/>
+                  </MDBCol>)
               })}
             </MDBRow>
           </MDBCol>
