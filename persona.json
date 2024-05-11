@@ -1,88 +1,23 @@
 {
-    "person": [
-        {
-            "Name": "Lawyer",
-            "Description": "A lawyer advises and represents clients in legal matters, prepares legal documents, and advocates in court to uphold justice."
-        },
-        {
-            "Name": "Parents",
-            "Description": "Parents are caregivers who nurture, guide, and support their children, providing emotional, physical, and financial stability throughout their development."
-        },
-        {
-            "Name": "Workers",
-            "Description": "\nA worker is someone employed to perform tasks or services, often for payment, contributing labor and expertise in various industries."
-        },
-        {
-            "Name": "Child",
-            "Description": "A child is a young human being, typically under the age of 18, who is in the early stages of development."
-        },
-        {
-            "Name": "Plato",
-            "Description": "(428/427–348/347 BCE) - Ancient Greek philosopher who founded the Academy in Athens, one of the earliest institutions of higher learning in the Western world. His dialogues have laid the foundation for much of Western philosophy."
-        },
-        {
-            "Name": "Aristotle",
-            "Description": "(384–322 BCE) - Greek philosopher and scientist who made significant and lasting contributions to nearly every aspect of human knowledge, from logic to biology to ethics and aesthetics."
-        },
-        {
-            "Name": "Confucius",
-            "Description": "(551–479 BCE) - Chinese teacher, editor, politician, and philosopher of the Spring and Autumn period of Chinese history. His philosophy emphasized personal and governmental morality, correctness of social relationships, justice, and sincerity."
-        },
-        {
-            "Name": "Immanuel Kant",
-            "Description": "(1724–1804) - German philosopher whose comprehensive and systematic work in epistemology (the theory of knowledge), ethics, and aesthetics greatly influenced all subsequent philosophy, particularly the various branches of Kantianism and idealism."
-        },
-        {
-            "Name": "René Descartes",
-            "Description": " (1596–1650) - French philosopher, mathematician, and scientist, dubbed the father of modern Western philosophy. He is famous for the quote, \"I think, therefore I am.\""
-        },
-        {
-            "Name": "Friedrich Nietzsche",
-            "Description": "(1844–1900) - German philosopher, cultural critic, poet, and philologist whose work has had a profound impact on modern intellectual history and modern philosophy, particularly existentialism and postmodernism."
-        },
-        {
-            "Name": "Karl Marx",
-            "Description": "(1818–1883) - German philosopher, economist, historian, sociologist, political theorist, journalist, and socialist revolutionary. His theories about society, economics, and politics, collectively understood as Marxism, hold that human societies develop through class conflict."
-        },
-        {
-            "Name": "Christianity",
-            "Description": "Belief in the Holy Trinity - one God in three persons: Father, Son (Jesus Christ), and Holy Spirit."
-        },
-        {
-            "Name": "Islam",
-            "Description": "Belief in Tawhid (the oneness of God) - the concept that God (Allah) is one, indivisible, and incomparable."
-        },
-        {
-            "Name": "Hinduism",
-            "Description": "Belief in Karma and Reincarnation (Samsara) - the idea that the soul (Atman) is reborn into a new body after death, based on the accumulated karma from past lives."
-        },
-        {
-            "Name": "Buddhism",
-            "Description": "4.  Belief in the Four Noble Truths - the fundamental teachings of the Buddha:\n    - The truth of suffering (dukkha)\n    - The truth of the origin of suffering (samudaya)\n    - The truth of the cessation of suffering (nirodha)\n    - The truth of the path to the cessation of suffering (magga)"
-        },
-        {
-            "Name": "Judaism",
-            "Description": "Belief in the covenant between God and the Jewish people, as expressed in the Torah (the first five books of the Hebrew Bible) and the commandments (mitzvot) that follow from it."
-        },
-        {
-            "Name": "Greta (after Greta Thunberg)",
-            "Description": "Environmental Science, Upper-middle-class, Stockholm, Sweden - Brings a passionate voice on climate change and sustainability."
-        },
-        {
-            "Name": "Mandela (after Nelson Mandela)",
-            "Description": "Economics, Upper-class, Accra, Ghana - Offers a deep understanding of economic systems and their impact on developing nations."
-        },
-        {
-            "Name": "Ruth (after Ruth Bader Ginsburg)",
-            "Description": "Constitutional Law, Upper-middle-class, Washington D.C., USA - Provides a legal perspective on social justice and human rights."
-        },
-        {
-            "Name": "Ahmed (after Ahmed Zewail)",
-            "Description": "Chemistry, Middle-class, Cairo, Egypt - Brings a scientific perspective on innovation and technological advancements."
-        },
-        {
-            "Name": "Leila (after Leila Khaled)",
-            "Description": "Political Science, Lower-middle-class, Beirut, Lebanon - Adds a perspective on political activism, social change, and Middle Eastern affairs"
-        }
-    ]
+    "Lawyer": "A lawyer advises and represents clients in legal matters, prepares legal documents, and advocates in court to uphold justice.",
+    "Parents": "Parents are caregivers who nurture, guide, and support their children, providing emotional, physical, and financial stability throughout their development.",
+    "Workers": "A worker is someone employed to perform tasks or services, often for payment, contributing labor and expertise in various industries.",
+    "Child": "A child is a young human being, typically under the age of 18, who is in the early stages of development.",
+    "Plato": "Ancient Greek philosopher who founded the Academy in Athens, one of the earliest institutions of higher learning in the Western world. His dialogues have laid the foundation for much of Western philosophy.",
+    "Aristotle": "Greek philosopher and scientist who made significant and lasting contributions to nearly every aspect of human knowledge, from logic to biology to ethics and aesthetics.",
+    "Confucius": "Chinese teacher, editor, politician, and philosopher of the Spring and Autumn period of Chinese history. His philosophy emphasized personal and governmental morality, correctness of social relationships, justice, and sincerity.",
+    "Immanuel Kant": "German philosopher whose comprehensive and systematic work in epistemology (the theory of knowledge), ethics, and aesthetics greatly influenced all subsequent philosophy, particularly the various branches of Kantianism and idealism.",
+    "Ren\u00e9 Descartes": "French philosopher, mathematician, and scientist, dubbed the father of modern Western philosophy. He is famous for the quote, 'I think, therefore I am.'",
+    "Friedrich Nietzsche": "German philosopher, cultural critic, poet, and philologist whose work has had a profound impact on modern intellectual history and modern philosophy, particularly existentialism and postmodernism.",
+    "Karl Marx": "German philosopher, economist, historian, sociologist, political theorist, journalist, and socialist revolutionary. His theories about society, economics, and politics, collectively understood as Marxism, hold that human societies develop through class conflict.",
+    "Christianity": "Belief in the Holy Trinity - one God in three persons: Father, Son (Jesus Christ), and Holy Spirit.",
+    "Islam": "Belief in Tawhid (the oneness of God) - the concept that God (Allah) is one, indivisible, and incomparable.",
+    "Hinduism": "Belief in Karma and Reincarnation (Samsara) - the idea that the soul (Atman) is reborn into a new body after death, based on the accumulated karma from past lives.",
+    "Buddhism": "Belief in the Four Noble Truths - the fundamental teachings of the Buddha: The truth of suffering (dukkha), the truth of the origin of suffering (samudaya), the truth of the cessation of suffering (nirodha), and the truth of the path to the cessation of suffering (magga).",
+    "Judaism": "Belief in the covenant between God and the Jewish people, as expressed in the Torah (the first five books of the Hebrew Bible) and the commandments (mitzvot) that follow from it.",
+    "Greta (after Greta Thunberg)": "Environmental Science, Upper-middle-class, Stockholm, Sweden - Brings a passionate voice on climate change and sustainability.",
+    "Mandela (after Nelson Mandela)": "Economics, Upper-class, Accra, Ghana - Offers a deep understanding of economic systems and their impact on developing nations.",
+    "Ruth (after Ruth Bader Ginsburg)": "Constitutional Law, Upper-middle-class, Washington D.C., USA - Provides a legal perspective on social justice and human rights.",
+    "Ahmed (after Ahmed Zewail)": "Chemistry, Middle-class, Cairo, Egypt - Brings a scientific perspective on innovation and technological advancements.",
+    "Leila (after Leila Khaled)": "Political Science, Lower-middle-class, Beirut, Lebanon - Adds a perspective on political activism, social change, and Middle Eastern affairs."
 }
