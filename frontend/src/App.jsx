@@ -51,6 +51,20 @@ export default function App() {
   
 
   const startDiscussion = () => {
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        "question": "What is the meaning of life?",
+        "rounds": 2,
+        "agents": ["Immanuel Kant", "Lawyer"]
+    })
+    };
+    fetch('http://0.0.0.0:8000/debate', requestOptions)
+        .then(response => response.json())
+        .then(data => {
+          console.log('aniket', data);
+        });
     setDiscussionStarted(true)
   }
 
