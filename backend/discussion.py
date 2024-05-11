@@ -44,7 +44,7 @@ def main(question, agent_ids, rounds):
     agent_contexts = []
     for a in agent_ids:
         agent_contexts.append([
-            {"role": "system", "content": persona[a]["context"]},
+            {"role": "system", "content": persona[a]},
             {"role": "user", "content": question}
         ])
 
@@ -79,5 +79,5 @@ if __name__ == "__main__":
 
     rounds = 2
     question = 'What is the meaning of life?'
-    agents = ['Kant', 'Hume']
+    agents = ['Lawyer', 'Immanuel Kant']
     main(question, agents, rounds)
