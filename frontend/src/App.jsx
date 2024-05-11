@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import {
   MDBContainer,
   MDBRow,
@@ -12,8 +12,15 @@ import {
   MDBCardHeader,
   MDBCheckbox
 } from "mdb-react-ui-kit";
+import personas from './persona.json';
 
 export default function App() {
+  useEffect(() => {
+    console.log(personas);
+    for (const key in personas) {
+      console.log(key);
+    }
+  }, []);
   const [texts, setTexts] = useState([
     {
       user: 'Socrates',
