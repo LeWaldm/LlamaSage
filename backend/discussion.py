@@ -87,10 +87,10 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                 print('-----------------------------')
                 print(content)
                 round_responses.append({agents[i]: content})
+            yield round_responses
     else:
         raise KeyError(f"mode {mode} not implemented")
 
-    yield round_responses
 
 def generate_consensus(question, debate):
     
@@ -126,9 +126,9 @@ def generate_consensus(question, debate):
                     model=GROQ_MODEL,
                     messages=msg,
                     n=1)
-    print('1################')
+    # print('1################')
     summary = completion.choices[0].message.content
-    print(summary)
+    # print(summary)
 
     content = f'Your task is to analyze the summary of the positions of each agent and provide a final verdict of the discussion in the form reasoning and final verdict in a JSON format. You MUST return only JSON object.'
     msg.append({"role": "user", "content": content})
@@ -140,8 +140,8 @@ def generate_consensus(question, debate):
                     messages=msg,
                     n=1)
 
-    print('2################')
-    print(completion.choices[0].message.content)
+    # print('2################')
+    # print(completion.choices[0].message.content)
 
     content = f'Your task is to look at the final verdict of all agents and provide final consensus of the discussion in a JSON format. consensus must be in 2 sentences.'
     msg.append({"role": "user", "content": content})
@@ -153,7 +153,7 @@ def generate_consensus(question, debate):
                     messages=msg,
                     n=1)
     json_out = completion.choices[0].message.content
-    print(json_out)
+    # print(json_out)
     
     return json_out
 
