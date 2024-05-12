@@ -15,6 +15,7 @@ import networkx as nx
 from pyvis.network import Network
 from copy import deepcopy
 import os
+import weave
 
 GROQ_MODEL = 'llama3-70b-8192'
 GRAPH_PATH = '/Users/adas/codingProjects/LlamaSage/backend/network.html'
@@ -44,18 +45,32 @@ def construct_message(agents, agent_ids, contexts, question, idx):
 
     return {"role": "user", "content": prefix_string}
 
+@weave.op()
+def query(client, agent_context):
+    completion = client.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=agent_context,
+                    n=1)
+    return completion.choices[0].message.content 
+
 def create_agreement_graph(agents, agreements):
     """ really messy code """
 
+    # params
     multiplier = 7
     edge_color = '#d57eeb'
 
-    G = nx.complete_graph(agents)
+    weights_pairs = {}
     for a, agree in zip(agents, agreements):
         for b, value in agree.items():
             if a == b:
                 continue
-            G.add_edge(a,b,weight=(value-1)*multiplier + 1, color=edge_color)
+            weights_pairs[frozenset([a,b])] = weights_pairs.get(frozenset([a,b]), 0) + value
+    G = nx.complete_graph(agents)
+    for s, value in weights_pairs.items():
+        a,b = list(s)
+        print(a,b, value)
+        G.add_edge(a,b,weight=(value-2)*multiplier + 1, color=edge_color)
     pos = nx.spring_layout(G)
 
     base_size = 1
@@ -84,14 +99,11 @@ def create_agreement_graph(agents, agreements):
     net.show(GRAPH_PATH)
     print('done')
 
-def parse_to_json(completion):
-    try: 
-        out = completion.choices[0].message.content
-        out = out[out.index('{'):out.index('}')+1]
-        out = eval(out)
-    except:
-        out = {}
+def parse_to_json(out):
+    out = out[out.index('{'):out.index('}')+1]
+    out = eval(out)
     return out
+
 
 async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict[str, str]], None]:
 
@@ -131,10 +143,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                     agent_context.append(message)
 
                 # generate answer
-                completion = client.chat.completions.create(
-                    model=GROQ_MODEL,
-                    messages=agent_context,
-                    n=1)
+                completion = query(client, agent_context)
 
                 # construct assistant message
                 content = completion.choices[0].message.content
@@ -150,10 +159,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
 
                 # analyze agreement
                 msg_agree = {"role": "user", "content": f"For each participant of {agent_ids_other} provide a number from 1 to 5 indicating how much you agree with their opinion/answer (X) at the end of their statement. 1 means you strongly disagree and 5 means you strongly agree. Give the output as a python dictionary with the follwing keys {agent_ids_other}. You MUST only return a python dictionary."}
-                completion = client.chat.completions.create(
-                    model=GROQ_MODEL,
-                    messages=agent_context + [msg_agree],
-                    n=1)
+                completion = query(client, agent_context + [msg_agree])
                 print('############# AGREEMENT ################')
                 d = parse_to_json(completion)
                 print(d)
@@ -196,7 +202,6 @@ def generate_consensus(question, debate, agent_context, agreements):
 
             for d in responses:
                 for agent, response in d.items():  # it is only one 
-                    print(f'{round}: {agent}')
                     content += f'\n\n\n\n{agent} says: {response}'
 
     # get bullet points summary
@@ -204,10 +209,7 @@ def generate_consensus(question, debate, agent_context, agreements):
         "role": "user",
         "content": content
     })
-    completion = client.chat.completions.create(
-                    model=GROQ_MODEL,
-                    messages=msg,
-                    n=1)
+    completion = query(client, msg)
     print('################ Summary bullet points')
     summary_per_agent = parse_to_json(completion)
     print(summary_per_agent)
@@ -217,10 +219,7 @@ def generate_consensus(question, debate, agent_context, agreements):
     # get final verdict
     content = f'Your task is to look at the final verdict of all agents and provide final consensus of the discussion in a JSON format with key consensus. consensus must be in 2 sentences.'
     msg.append({"role": "user", "content": content})
-    completion = client.chat.completions.create(
-                    model=GROQ_MODEL,
-                    messages=msg,
-                    n=1)
+    completion = query(client, msg)
     print('################ Summary final verdict')
     json_out = parse_to_json(completion)
     final_verdict = json_out['consensus']
@@ -247,10 +246,7 @@ def generate_consensus(question, debate, agent_context, agreements):
                 'content': f'The objective moderator of the discussion has summarized the positions of all agents in the following verdict: {final_verdict}. Provide a number from 1 to 5 indicating how much you agree with the final verdict. 1 means you strongly disagree and 5 means you strongly agree. Give the output as a python dictionary with the key agreement. You MUST only return a python dictionary.'
             }
         ]
-        completion = client.chat.completions.create(
-                model=GROQ_MODEL,
-                messages=msg,
-                n=1)
+        completion = query(client, msg)
         d = parse_to_json(completion)
         agreements[i][consensus_label] = d['agreement']
         consensus_dict[agent] = d['agreement']
@@ -291,6 +287,7 @@ class OpinionGenerateRequestBody(BaseModel):
 
 @app.post("/debate")
 async def generate(request_body: OpinionGenerateRequestBody):
+    weave.init('intro-example')
     async def generate_responses():
         consensus = []
         async for round_response, agent_contexts, agreements in generate_opinion(request_body.question, request_body.agents, request_body.rounds):
