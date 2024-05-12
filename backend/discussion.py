@@ -146,7 +146,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                 completion = query(client, agent_context)
 
                 # construct assistant message
-                content = completion.choices[0].message.content
+                content = completion
                 assistant_message = {"role": "assistant", "content": content}
                 agent_context.append(assistant_message)
 
