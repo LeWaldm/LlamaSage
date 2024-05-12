@@ -15,18 +15,14 @@ from copy import deepcopy
 
 GROQ_MODEL = 'llama3-70b-8192'
 GRAPH_FILE = 'network.html'
+IMAGES_GRAPH_BASE_PATH = '/Users/lewaldm/Documents/Llmama3Hackathon/LlamaSage/frontend/public/thumbnails/'
+PERSONA_FILE = 'persona.json'
 
 # super dirty hack to get the final states to transfer to another method without 
 # 
 AGREEMENTS_FINAL = []
 FINAL_CONTEXTS = []
 
-"""
-modes
-- sequential: agents are ordered in a sequence
-- parallel (similar to shared paper)
-
-"""
 
 def construct_message(agents, agent_ids, contexts, question, idx):
     if len(agents) == 0:
@@ -43,7 +39,7 @@ def construct_message(agents, agent_ids, contexts, question, idx):
     return {"role": "user", "content": prefix_string}
 
 def create_agreement_graph(agents, agreements):
-    multiplier = 5
+    multiplier = 9
     edge_color = '#d57eeb'
 
     G = nx.complete_graph(agents)
@@ -71,9 +67,9 @@ def create_agreement_graph(agents, agreements):
 
     net = Network(width='1900px', height='900px', bgcolor='#222222', font_color='white', notebook=True)
     net.repulsion()
-    net.add_node('Plato', shape='image', image ="/Users/lewaldm/Documents/Llmama3Hackathon/depositphotos_157821304-stock-photo-classic-statue-socrates.jpg")
-    net.add_node('Immanuel Kant')
-    net.add_node('Lawyer')
+
+    for agent in agents:
+        net.add_node(agent, shape='image', image = IMAGES_GRAPH_BASE_PATH + agent + '.png')
 
     net.from_nx(G)
     net.show(GRAPH_FILE)
@@ -81,7 +77,7 @@ def create_agreement_graph(agents, agreements):
 async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict[str, str]], None]:
 
     # setup
-    persona = json.load(open('persona.json'))
+    persona = json.load(open(PERSONA_FILE))
     load_dotenv()
     client = Groq(
         api_key = os.environ.get("GROQ_API_KEY"),
@@ -260,6 +256,18 @@ async def generate(request_body: OpinionGenerateRequestBody):
         final_consensus = generate_consensus(request_body.question, consensus)
         yield json.dumps({"final_consensus": final_consensus})
     return StreamingResponse(generate_responses())
+
+class AddMemberRequestBody(BaseModel):
+    name: str = 'new_agent'
+    description: str = 'I am a new agent.'
+
+@app.post("/add_persona")
+async def add_persona(request_body: AddMemberRequestBody):
+
+    persona = json.load(open(PERSONA_FILE))
+    persona[request_body.name] = request_body.description
+    json.dump(persona, open(PERSONA_FILE, 'w'), indent=4)
+    return {"status": "success"}
 
 if __name__ == "__main__":
     uvicorn.run("discussion:app", host="0.0.0.0", port=8000, reload=True)
