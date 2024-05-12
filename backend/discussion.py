@@ -103,8 +103,7 @@ def generate_consensus(question, debate):
     msg = []
     msg.append(
         {'role': 'system', 'content': "You are an objective moderator of a discussion between multiple agents. The agents try to answer a particular question."}
-    )  
-
+    )
 
     # iterate
     content = f'The question of this debate is {question}. The participants of the discussion are {agent_ids}.'
@@ -131,23 +130,34 @@ def generate_consensus(question, debate):
                     messages=msg,
                     n=1)
     print('1################')
-    print(completion.choices[0].message.content)
+    summary = completion.choices[0].message.content
+    print(summary)
 
-    msg.append({"role": "assistant", "content": completion.choices[0].message.content})
-    # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion and putting the final verdict in the form (X) at the end of your response"})
+    content = f'Your task is to analyze the summary of the positions of each agent and provide a final verdict of the discussion in the form reasoning and final verdict in a JSON format. You MUST return only JSON object.'
+    msg.append({"role": "user", "content": content})
     # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in JSON format."})
-    msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in the form reasoning and final verdict in a JSON format."})
+    # msg = ({"role": "user", "content": content})
 
     completion = client.chat.completions.create(
                     model=GROQ_MODEL,
                     messages=msg,
                     n=1)
-    
-
 
     print('2################')
+    print(completion.choices[0].message.content)
+
+    content = f'Your task is to look at the final verdict of all agents and provide final consensus of the discussion in a JSON format. consensus must be in 2 sentences.'
+    msg.append({"role": "user", "content": content})
+    # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in JSON format."})
+    # msg = ({"role": "user", "content": content})
+
+    completion = client.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=msg,
+                    n=1)
     json_out = completion.choices[0].message.content
     print(json_out)
+    
     return json_out
 
 def setup_groq():
