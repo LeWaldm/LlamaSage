@@ -95,6 +95,67 @@ def generate_opinion(question, agents, rounds):
 
     return consensus
 
+def generate_consensus(question, debate):
+    
+    # setup
+    client = setup_groq()
+    agent_ids = [next(iter(d.keys())) for d in debate[0]]
+    msg = []
+    msg.append(
+        {'role': 'system', 'content': "You are an objective moderator of a discussion between multiple agents. The agents try to answer a particular question."}
+    )  
+
+
+    # iterate
+    content = f'The question of this debate is {question}. The participants of the discussion are {agent_ids}.'
+    content = f'Your task is to summarize the position of each agent in a single sentence in a JSON format. The agents are {agent_ids} and the question is {question}'
+    content += 'All agents now state their initial perspective on the question.'
+
+    mode = 'nonparsed'
+    if mode == 'nonparsed':
+        content += str(debate)
+    elif mode == 'parsed':
+        for round, responses in enumerate(debate):
+            if round > 0:
+                content += f'\n\n\n\nRound {round}: The agents have reflected on the statement of the previous round and present their updated view.'
+            for d in responses:
+                for agent, response in d.items():  # it is only one 
+                    content += f'\n\n\n\n{agent} says: {response}'
+
+    msg.append({
+        "role": "user",
+        "content": content
+    })
+    completion = client.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=msg,
+                    n=1)
+    print('1################')
+    print(completion.choices[0].message.content)
+
+    msg.append({"role": "assistant", "content": completion.choices[0].message.content})
+    # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion and putting the final verdict in the form (X) at the end of your response"})
+    # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in JSON format."})
+    msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in the form reasoning and final verdict in a JSON format."})
+
+    completion = client.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=msg,
+                    n=1)
+    
+
+
+    print('2################')
+    print(completion.choices[0].message.content)
+    return content
+
+def setup_groq():
+    load_dotenv()
+    client = Groq(
+        api_key = os.environ.get("GROQ_API_KEY"),
+    )
+    return client
+
 app = FastAPI()
 
 app.add_middleware(
@@ -115,7 +176,8 @@ class OpinionGenerateRequestBody(BaseModel):
 
 @app.post("/debate")
 async def generate(request_body: OpinionGenerateRequestBody):
-    consensus = generate_opinion(request_body.question, request_body.agents, request_body.rounds)
+    debate = generate_opinion(request_body.question, request_body.agents, request_body.rounds)
+    consensus = generate_consensus(request_body.question, debate)
     return consensus
 
 
