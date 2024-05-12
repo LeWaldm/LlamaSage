@@ -17,12 +17,12 @@ from copy import deepcopy
 import os
 
 GROQ_MODEL = 'llama3-70b-8192'
-GRAPH_PATH = './backend/network.html'
-IMAGES_GRAPH_BASE_PATH = '/Users/lewaldm/Documents/Llmama3Hackathon/LlamaSage/frontend/public/thumbnails/'
-PERSONA_FILE = 'persona.json'
+GRAPH_PATH = '/Users/adas/codingProjects/LlamaSage/backend/network.html'
+IMAGES_GRAPH_BASE_PATH = '/thumbnails'
+PERSONA_FILE = '/Users/adas/codingProjects/LlamaSage/frontend/src/persona.json'
 N_RESPONSES_FINAL_CONSESUS = 1
-
 Q_initial_system_setyp = 'You will discuss a single question with other participants. The goal is to persuade other agents of your opinion or get pursuaded by other participants of their opinions. Each of your answer should have at most 130 words.'
+
 Q_prior_response = """\n\nConsidering the positions from any participant of the other participants, has your opinion changed? Try to persuade a single participant of your opinion."""
 
 def construct_message(agents, agent_ids, contexts, question, idx):
@@ -306,6 +306,9 @@ async def generate(request_body: OpinionGenerateRequestBody):
 
 @app.post("/graph")
 async def get_agreement_graph():
+    if(not os.path.exists(GRAPH_PATH)):
+        print('returning early')
+        return ''
     with open(GRAPH_PATH, 'r') as file:  # r to open file in READ mode
         html_as_string = file.read()
     return html_as_string
