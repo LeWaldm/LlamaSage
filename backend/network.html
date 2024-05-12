@@ -88,8 +88,8 @@
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "font": {"color": "white"}, "id": "Aristotle", "image": "/thumbnails/Aristotle.png", "label": "Aristotle", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Nelson Mandela", "image": "/thumbnails/Nelson Mandela.png", "label": "Nelson Mandela", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "The Joker", "image": "/thumbnails/The Joker.png", "label": "The Joker", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "consensus", "image": "/thumbnails/consensus.png", "label": "consensus", "shape": "image"}]);
-                  edges = new vis.DataSet([{"color": "#d57eeb", "from": "Aristotle", "to": "Nelson Mandela", "width": 8}, {"color": "#d57eeb", "from": "Aristotle", "to": "The Joker", "width": 15}, {"color": "#d57eeb", "from": "Aristotle", "to": "consensus", "width": 29}, {"color": "#d57eeb", "from": "Nelson Mandela", "to": "The Joker", "width": 15}, {"color": "#d57eeb", "from": "Nelson Mandela", "to": "consensus", "width": 29}, {"color": "#d57eeb", "from": "The Joker", "to": "consensus", "width": 8}]);
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "font": {"color": "white"}, "id": "Confucius", "image": "/thumbnails/Confucius.png", "label": "Confucius", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "Einstein", "image": "/thumbnails/Einstein.png", "label": "Einstein", "shape": "image"}, {"color": "#97c2fc", "font": {"color": "white"}, "id": "consensus", "image": "/thumbnails/consensus.png", "label": "consensus", "shape": "image"}]);
+                  edges = new vis.DataSet([{"color": "#d57eeb", "from": "Confucius", "to": "Einstein", "width": 1}, {"color": "#d57eeb", "from": "Confucius", "to": "consensus", "width": 29}, {"color": "#d57eeb", "from": "Einstein", "to": "consensus", "width": 29}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });

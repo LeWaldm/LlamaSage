@@ -83,13 +83,6 @@ export default function App() {
     }
   }, [texts, conclusion, personas]);
 
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     setIframeContent(`<html>\n    <head>\n        <meta charset=\"utf-8\">\n        \n            <script src=\"lib/bindings/utils.js\"></script>\n            <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css\" integrity=\"sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\" />\n            <script src=\"https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js\" integrity=\"sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\"></script>\n            \n        \n<center>\n<h1></h1>\n</center>\n\n<!-- <link rel=\"stylesheet\" href=\"../node_modules/vis/dist/vis.min.css\" type=\"text/css\" />\n<script type=\"text/javascript\" src=\"../node_modules/vis/dist/vis.js\"> </script>-->\n        <link\n          href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css\"\n          rel=\"stylesheet\"\n          integrity=\"sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6\"\n          crossorigin=\"anonymous\"\n        />\n        <script\n          src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js\"\n          integrity=\"sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf\"\n          crossorigin=\"anonymous\"\n        ></script>\n\n\n        <center>\n          <h1></h1>\n        </center>\n        <style type=\"text/css\">\n\n             #mynetwork {\n                 width: 1900px;\n                 height: 900px;\n                 background-color: #222222;\n                 border: 1px solid lightgray;\n                 position: relative;\n                 float: left;\n             }\n\n             \n\n             \n\n             \n        </style>\n    </head>\n\n\n    <body>\n        <div class=\"card\" style=\"width: 100%\">\n            \n            \n            <div id=\"mynetwork\" class=\"card-body\"></div>\n        </div>\n\n        \n        \n\n        <script type=\"text/javascript\">\n\n              // initialize global variables.\n              var edges;\n              var nodes;\n              var allNodes;\n              var allEdges;\n              var nodeColors;\n              var originalNodes;\n              var network;\n              var container;\n              var options, data;\n              var filter = {\n                  item : '',\n                  property : '',\n                  value : []\n              };\n\n              \n\n              \n\n              // This method is responsible for drawing the graph, returns the drawn network\n              function drawGraph() {\n                  var container = document.getElementById('mynetwork');\n\n                  \n\n                  // parsing and collecting nodes and edges from the python\n                  nodes = new vis.DataSet([{\"color\": \"#97c2fc\", \"font\": {\"color\": \"white\"}, \"id\": \"Confucius\", \"image\": \"/Users/adas/codingProjects/LlamaSage/frontend/public/thumbnails/Confucius.png\", \"label\": \"Confucius\", \"shape\": \"image\"}, {\"color\": \"#97c2fc\", \"font\": {\"color\": \"white\"}, \"id\": \"Nelson Mandela\", \"image\": \"/Users/adas/codingProjects/LlamaSage/frontend/public/thumbnails/Nelson Mandela.png\", \"label\": \"Nelson Mandela\", \"shape\": \"image\"}, {\"color\": \"#97c2fc\", \"font\": {\"color\": \"white\"}, \"id\": \"consensus\", \"image\": \"/Users/adas/codingProjects/LlamaSage/frontend/public/thumbnails/consensus.png\", \"label\": \"consensus\", \"shape\": \"image\"}]);\n                  edges = new vis.DataSet([{\"color\": \"#d57eeb\", \"from\": \"Confucius\", \"to\": \"Nelson Mandela\", \"width\": 8}, {\"color\": \"#d57eeb\", \"from\": \"Confucius\", \"to\": \"consensus\", \"width\": 29}, {\"color\": \"#d57eeb\", \"from\": \"Nelson Mandela\", \"to\": \"consensus\", \"width\": 29}]);\n\n                  nodeColors = {};\n                  allNodes = nodes.get({ returnType: \"Object\" });\n                  for (nodeId in allNodes) {\n                    nodeColors[nodeId] = allNodes[nodeId].color;\n                  }\n                  allEdges = edges.get({ returnType: \"Object\" });\n                  // adding nodes and edges to the graph\n                  data = {nodes: nodes, edges: edges};\n\n                  var options = {\n    \"configure\": {\n        \"enabled\": false\n    },\n    \"edges\": {\n        \"color\": {\n            \"inherit\": true\n        },\n        \"smooth\": {\n            \"enabled\": true,\n            \"type\": \"dynamic\"\n        }\n    },\n    \"interaction\": {\n        \"dragNodes\": true,\n        \"hideEdgesOnDrag\": false,\n        \"hideNodesOnDrag\": false\n    },\n    \"physics\": {\n        \"enabled\": true,\n        \"repulsion\": {\n            \"centralGravity\": 0.2,\n            \"damping\": 0.09,\n            \"nodeDistance\": 100,\n            \"springConstant\": 0.05,\n            \"springLength\": 200\n        },\n        \"solver\": \"repulsion\",\n        \"stabilization\": {\n            \"enabled\": true,\n            \"fit\": true,\n            \"iterations\": 1000,\n            \"onlyDynamicEdges\": false,\n            \"updateInterval\": 50\n        }\n    }\n};\n\n                  \n\n\n                  \n\n                  network = new vis.Network(container, data, options);\n\n                  \n\n                  \n\n                  \n\n\n                  \n\n                  return network;\n\n              }\n              drawGraph();\n        </script>\n    </body>\n</html>`);
-  //   }, 10000);
-  // }, []);
-
-
   useEffect(() => {
     if (!iframeRef.current) return;
     const iframe = iframeRef.current;
@@ -129,6 +122,12 @@ export default function App() {
                 const data = JSON.parse(text);
                 if(data.final_consensus) {
                   setConclusion(data.final_consensus)
+                  console.log('Final consensus:', data.summary)
+                  data.summary.forEach((element, index) => {
+                    setTimeout(() => {
+                      setTexts(prevTexts => [...prevTexts, {user: Object.keys(element)[0], text: element[Object.keys(element)[0]]}]);
+                    }, 2000 * (index + round));
+                  })
                   return;
                 }
                 // loop through data array
@@ -193,12 +192,15 @@ export default function App() {
 
   const handleChange = (e, value) => {
     if(e.target.checked){
+      if (activeAgents.includes(value)) return 
       const newActiveAgents = [...activeAgents, value]
       setActiveAgents(newActiveAgents)
     } else {
+      if (!activeAgents.includes(value)) return
       const newActiveAgents = activeAgents.filter(agent => agent !== value)
       setActiveAgents(newActiveAgents)
     }
+    console.log('active agents:', activeAgents)
   }
 
   const chunkArray = (arr, chunkSize) => {
@@ -230,7 +232,7 @@ export default function App() {
     try{
       return require(`./thumbnails/${agentName}.png`)
     } catch {
-      return require(`./thumbnails/default.png`)
+      return require(`./thumbnails/Default.png`)
     }
   }
 
@@ -299,7 +301,7 @@ export default function App() {
                         style={{height: '25px', width: '25px',marginRight: '5px'}}
                         alt=''
                       />
-                      <MDBCheckbox label={value[3]} key={index*3 + 2} onChange={e => handleChange(e, value[2])}/>
+                      <MDBCheckbox label={value[3]} key={index*3 + 2} onChange={e => handleChange(e, value[3])}/>
                       <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
                         <MDBPopoverHeader>{value[3]}</MDBPopoverHeader>
                         <MDBPopoverBody>{personas[value[3]]}</MDBPopoverBody>
@@ -312,6 +314,7 @@ export default function App() {
       </MDBRow>
       <MDBRow className="text-center mb-2">
         <MDBTypography>
+        <MDBCheckbox className="mb-3" name='inlineCheck' id='inlineCheckbox1' value='option1' label='Check the Internet' inline />
           <MDBBtn style={{marginRight: '20px'}} color="light" size="lg" rounded onClick={event => startDiscussion()}>
             Start Discussion
           </MDBBtn>
