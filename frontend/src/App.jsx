@@ -55,6 +55,7 @@ export default function App() {
   const [saveString, setSaveString] = useState('Save Changes');
   const toggleOpen = () => setBasicModal(!basicModal);
   const [customPersona, setCustomPersona] = useState({title: '', description: ''})
+  const iframeRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -68,6 +69,17 @@ export default function App() {
     }
     setAgents(newAgents);
     scrollToBottom();
+    const iframe = iframeRef.current;
+    if (iframe) {
+        // Wait for the iframe to load
+        iframe.onload = () => {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            // Scroll to the center of the iframe content
+            const x = doc.body.scrollWidth / 2 - iframe.clientWidth / 2;
+            const y = doc.body.scrollHeight / 2 - iframe.clientHeight / 2;
+            iframe.contentWindow.scrollTo(x, y);
+        };
+    }
   }, [texts, conclusion, personas]);
   
 
@@ -307,7 +319,7 @@ export default function App() {
           </MDBTypography>
         </MDBCol>
         <MDBCol size='4'>
-          <iframe style={{width: '100%', height: '65%'}} src="network.html"></iframe>
+          <iframe ref={iframeRef} style={{width: '100%', height: '65%'}} src="/network_graph.html"></iframe>
           <MDBCard style={{height: '35%'}}>
             <MDBCardBody>
               <MDBCardTitle>Conclusion</MDBCardTitle>
