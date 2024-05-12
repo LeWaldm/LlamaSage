@@ -5,9 +5,10 @@ from dotenv import load_dotenv
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict, AsyncGenerator
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 GROQ_MODEL = 'llama3-70b-8192'
 
@@ -32,9 +33,7 @@ def construct_message(agents, agent_ids, contexts, question, idx):
     prefix_string = prefix_string + """\n\n Using the reasoning from other agents as additional advice, can you give an updated answer? Examine your solution and that other agents step by step. Put your answer in the form (X) at the end of your response.""".format(question)
     return {"role": "user", "content": prefix_string}
 
-def generate_opinion(question, agents, rounds):
-
-    consensus = []
+async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict[str, str]], None]:
 
     # setup
     persona = json.load(open('persona.json'))
@@ -88,12 +87,10 @@ def generate_opinion(question, agents, rounds):
                 print('-----------------------------')
                 print(content)
                 round_responses.append({agents[i]: content})
-            consensus.append(round_responses)
-            round_responses = []
     else:
         raise KeyError(f"mode {mode} not implemented")
 
-    return consensus
+    yield round_responses
 
 def generate_consensus(question, debate):
     
@@ -187,10 +184,14 @@ class OpinionGenerateRequestBody(BaseModel):
 
 @app.post("/debate")
 async def generate(request_body: OpinionGenerateRequestBody):
-    debate = generate_opinion(request_body.question, request_body.agents, request_body.rounds)
-    consensus = generate_consensus(request_body.question, debate)
-    return consensus
-
+    async def generate_responses():
+        consensus = []
+        async for round_response in generate_opinion(request_body.question, request_body.agents, request_body.rounds):
+            yield json.dumps(round_response)
+            consensus.append(round_response)
+        final_consensus = generate_consensus(request_body.question, consensus)
+        yield json.dumps({"final_consensus": final_consensus})
+    return StreamingResponse(generate_responses())
 
 if __name__ == "__main__":
     uvicorn.run("discussion:app", host="0.0.0.0", port=8000, reload=True)
