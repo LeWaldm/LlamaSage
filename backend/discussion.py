@@ -20,7 +20,9 @@ GROQ_MODEL = 'llama3-70b-8192'
 GRAPH_PATH = '/Users/adas/codingProjects/LlamaSage/backend/network.html'
 IMAGES_GRAPH_BASE_PATH = '/thumbnails'
 PERSONA_FILE = '/Users/adas/codingProjects/LlamaSage/frontend/src/persona.json'
-Q_initial_system_setyp = 'You will discuss a common quesiton with other participants. The goal is to find a joint solution to the proposed question. Each of your answer should have at most 130 words.'
+N_RESPONSES_FINAL_CONSESUS = 1
+Q_initial_system_setyp = 'You will discuss a single question with other participants. The goal is to persuade other agents of your opinion or get pursuaded by other participants of their opinions. Each of your answer should have at most 130 words.'
+
 Q_prior_response = """\n\nConsidering the positions from any participant of the other participants, has your opinion changed? Try to persuade a single participant of your opinion."""
 
 def construct_message(agents, agent_ids, contexts, question, idx):
@@ -129,10 +131,9 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                     agent_context.append(message)
 
                 # generate answer
-                answer_context = agent_context
                 completion = client.chat.completions.create(
                     model=GROQ_MODEL,
-                    messages=answer_context,
+                    messages=agent_context,
                     n=1)
 
                 # construct assistant message
@@ -177,20 +178,25 @@ def generate_consensus(question, debate, agent_context, agreements):
     )
 
     # iterate
-    content = f'The question of this debate is {question}. The participants of the discussion are {agent_ids}.'
     content = f'Your task is to summarize the position of each participant in a single sentence in a JSON format. The participants are {agent_ids} and the question is {question}'
     content += 'All agents now state their initial perspective on the question.'
 
     # get all content
-    mode = 'nonparsed'
+    mode = 'parsed'
     if mode == 'nonparsed':
         content += str(debate)
-    elif mode == 'parsed':
+    elif mode == 'parsed':  # only include initial system message, initial agent response, final agent response 
         for round, responses in enumerate(debate):
+
+            if round > 0 and round < len(debate) - N_RESPONSES_FINAL_CONSESUS:
+                continue
+
             if round > 0:
                 content += f'\n\n\n\nRound {round}: The participants have reflected on the statement of the previous round and present their updated view.'
+
             for d in responses:
                 for agent, response in d.items():  # it is only one 
+                    print(f'{round}: {agent}')
                     content += f'\n\n\n\n{agent} says: {response}'
 
     # get bullet points summary
