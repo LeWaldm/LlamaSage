@@ -146,8 +146,9 @@ def generate_consensus(question, debate):
 
 
     print('2################')
-    print(completion.choices[0].message.content)
-    return content
+    json_out = completion.choices[0].message.content
+    print(json_out)
+    return json_out
 
 def setup_groq():
     load_dotenv()
