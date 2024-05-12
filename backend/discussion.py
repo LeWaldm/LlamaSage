@@ -17,12 +17,12 @@ from copy import deepcopy
 import os
 
 GROQ_MODEL = 'llama3-70b-8192'
-GRAPH_PATH = 'network.html'
+GRAPH_PATH = './backend/network.html'
 IMAGES_GRAPH_BASE_PATH = '/Users/lewaldm/Documents/Llmama3Hackathon/LlamaSage/frontend/public/thumbnails/'
 PERSONA_FILE = 'persona.json'
 
 Q_initial_system_setyp = 'You will discuss a common quesiton with other participants. The goal is to find a joint solution to the proposed question. Each of your answer should have at most 130 words.'
-Q_prior_response = """\n\nConsidering the positions from any participant of all other participants, has your opinion changed? Try to persuade a single participant of your opinion."""
+Q_prior_response = """\n\nConsidering the positions from any participant of the other participants, has your opinion changed? Try to persuade a single participant of your opinion."""
 
 def construct_message(agents, agent_ids, contexts, question, idx):
     # if len(agents) == 0:
@@ -84,9 +84,13 @@ def create_agreement_graph(agents, agreements):
     print('done')
 
 def parse_to_json(completion):
-    out = completion.choices[0].message.content
-    out = out[out.index('{'):out.index('}')+1]
-    return eval(out)
+    try: 
+        out = completion.choices[0].message.content
+        out = out[out.index('{'):out.index('}')+1]
+        out = eval(out)
+    except:
+        out = {}
+    return out
 
 async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict[str, str]], None]:
 
@@ -109,7 +113,6 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
     mode = 'all_previous_replies'
     if mode == 'all_previous_replies':
         """ each agent has as context all previous answers from all agents."""
-
 
         for round in range(rounds):
             print(f'\n\n=====================================')
@@ -254,7 +257,7 @@ def generate_consensus(question, debate, agent_context, agreements):
     print('################ FINAL graph done')
 
     print('################ FINAL json_out')
-    return json_out['consensus']
+    return json_out['consensus'], summary_per_agent
 
 def setup_groq():
     load_dotenv()
@@ -289,11 +292,18 @@ async def generate(request_body: OpinionGenerateRequestBody):
             yield json.dumps(round_response)
             consensus.append(round_response)
         print('################### Start consensus')
-        final_consensus = generate_consensus(request_body.question, consensus, agent_contexts, agreements)
+        final_consensus, summary_per_agent = generate_consensus(request_body.question, consensus, agent_contexts, agreements)
         print('################### Finish consensus')
         print(final_consensus)
-        yield json.dumps({"final_consensus": final_consensus})
+        yield json.dumps({"final_consensus": final_consensus, 'summary': summary_per_agent})
     return StreamingResponse(generate_responses())
+
+
+@app.post("/graph")
+async def get_agreement_graph():
+    with open(GRAPH_PATH, 'r') as file:  # r to open file in READ mode
+        html_as_string = file.read()
+    return html_as_string
 
 class AddMemberRequestBody(BaseModel):
     name: str = 'new_agent'
