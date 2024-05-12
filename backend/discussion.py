@@ -1,3 +1,5 @@
+""" we draw inspiration from here https://github.com/composable-models/llm_multiagent_debate"""
+
 import json
 from groq import Groq
 import os
@@ -19,25 +21,32 @@ GRAPH_PATH = 'network.html'
 IMAGES_GRAPH_BASE_PATH = '/Users/lewaldm/Documents/Llmama3Hackathon/LlamaSage/frontend/public/thumbnails/'
 PERSONA_FILE = 'persona.json'
 
+Q_initial_system_setyp = 'You will discuss a common quesiton with other participants. The goal is to find a joint solution to the proposed question. Each of your answer should have at most 130 words.'
+Q_prior_response = """\n\nConsidering the positions from any participant of all other participants, has your opinion changed? Try to persuade a single participant of your opinion."""
 
 def construct_message(agents, agent_ids, contexts, question, idx):
-    if len(agents) == 0:
-        return {"role": "user", "content": "Can you double check that your answer is correct. Put your final answer in the form (X) at the end of your response."}
+    # if len(agents) == 0:
+    #     return {"role": "user", "content": "Can you double check that your answer is correct. Put your final answer in the form (X) at the end of your response."}
 
-    prefix_string = "These are the solutions to the problem from other agents: "
+    prefix_string = "These are the positions to the initial question from other participants: "
 
     for id, context in zip(agent_ids, contexts):
         agent_response = context[idx]["content"]
-        response = f"\n\n The solution from {id} is: ```{agent_response}```"
+        response = f"\n\n The position from {id} is: ```{agent_response}```"
         prefix_string = prefix_string + response
 
-    prefix_string = prefix_string + """\n\n Using the reasoning from other agents as additional advice, can you give an updated answer? Examine your solution and that other agents step by step. Put your answer in the form (X) at the end of your response.""".format(question)
+    # prefix_string = prefix_string + """\n\nUsing the positions from other agents as additional advice, can you give an updated answer? Examine your solution and that other agents step by step. Put your answer in the form (X) at the end of your response.""".format(question)
+    # prefix_string = prefix_string + """\n\nConsidering the positions from all other participants, has your opinion changed? Can you find a solution that satisfies all other participants? Put your very short answer in the form (X) at the end of your response.""".format(question)
+    # prefix_string = prefix_string + """\n\nConsidering the positions from all other participants, has your opinion changed? If not, try to persuade the other participants of your opinion. Put your very short opinion/answer in the form (X) at the end of your response."""
+    prefix_string = prefix_string + Q_prior_response
+
+
     return {"role": "user", "content": prefix_string}
 
 def create_agreement_graph(agents, agreements):
     """ really messy code """
 
-    multiplier = 9
+    multiplier = 7
     edge_color = '#d57eeb'
 
     G = nx.complete_graph(agents)
@@ -92,7 +101,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
     agent_contexts = []
     for agent in agents:
         agent_contexts.append([
-            {"role": "system", "content": "Pretend you are " + persona[agent] + " and you behave like " + persona[agent] + " would."},
+            {"role": "system", "content": "Pretend you are and behave like " + persona[agent] + ". " + Q_initial_system_setyp},
             {"role": "user", "content": question}
         ])
 
@@ -137,7 +146,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                 round_responses.append({agents[i]: content})
 
                 # analyze agreement
-                msg_agree = {"role": "user", "content": f"For each agent of {agent_ids_other} provide a number from 1 to 5 indicating how much you agree with the statement. 1 means you strongly disagree and 5 means you strongly agree. Give the output as a python dictionary with the follwing keys {agent_ids_other}. You MUST only return a python dictionary."}
+                msg_agree = {"role": "user", "content": f"For each participant of {agent_ids_other} provide a number from 1 to 5 indicating how much you agree with their opinion/answer (X) at the end of their statement. 1 means you strongly disagree and 5 means you strongly agree. Give the output as a python dictionary with the follwing keys {agent_ids_other}. You MUST only return a python dictionary."}
                 completion = client.chat.completions.create(
                     model=GROQ_MODEL,
                     messages=agent_context + [msg_agree],
@@ -148,9 +157,8 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                 d[agents[i]] = 5
                 agreements.append(d)
                 print('############# AGREEMENT ################')
-            create_agreement_graph(agents, agreements)
-            # CONTEXTS_FINAL = agent_contexts
-            # AGREEMENTS_FINAL = agreements
+            if round > 0:
+                create_agreement_graph(agents, agreements)
             yield round_responses, agent_contexts, agreements
     else:
         raise KeyError(f"mode {mode} not implemented")
@@ -163,58 +171,49 @@ def generate_consensus(question, debate, agent_context, agreements):
     agent_ids = [next(iter(d.keys())) for d in debate[0]]
     msg = []
     msg.append(
-        {'role': 'system', 'content': "You are an objective moderator of a discussion between multiple agents. The agents try to answer a particular question."}
+        {'role': 'system', 'content': "You are an objective moderator of a discussion between multiple participants. The participants try to answer a particular question."}
     )
 
     # iterate
     content = f'The question of this debate is {question}. The participants of the discussion are {agent_ids}.'
-    content = f'Your task is to summarize the position of each agent in a single sentence in a JSON format. The agents are {agent_ids} and the question is {question}'
+    content = f'Your task is to summarize the position of each participant in a single sentence in a JSON format. The participants are {agent_ids} and the question is {question}'
     content += 'All agents now state their initial perspective on the question.'
 
+    # get all content
     mode = 'nonparsed'
     if mode == 'nonparsed':
         content += str(debate)
     elif mode == 'parsed':
         for round, responses in enumerate(debate):
             if round > 0:
-                content += f'\n\n\n\nRound {round}: The agents have reflected on the statement of the previous round and present their updated view.'
+                content += f'\n\n\n\nRound {round}: The participants have reflected on the statement of the previous round and present their updated view.'
             for d in responses:
                 for agent, response in d.items():  # it is only one 
                     content += f'\n\n\n\n{agent} says: {response}'
 
+    # get bullet points summary
     msg.append({
         "role": "user",
         "content": content
     })
-
     completion = client.chat.completions.create(
                     model=GROQ_MODEL,
                     messages=msg,
                     n=1)
-    # print('1################')
-    summary = completion.choices[0].message.content
-    # msg.append({'role': 'assistant', 'content': summary})
-    # print(summary)
-
-    content = f'Your task is to analyze the summary of the positions of each agent and provide a final verdict of the discussion in the form reasoning and final verdict in a JSON format. You MUST return only JSON object.'
-    msg.append({"role": "user", "content": content})
-    # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in JSON format."})
-    # msg = ({"role": "user", "content": content})
-    completion = client.chat.completions.create(
-                    model=GROQ_MODEL,
-                    messages=msg,
-                    n=1)
+    print('################ Summary bullet points')
+    summary_per_agent = parse_to_json(completion)
+    print(summary_per_agent)
+    msg.append({'role': 'assistant', 'content': str(summary_per_agent)})
 
 
+    # get final verdict
     content = f'Your task is to look at the final verdict of all agents and provide final consensus of the discussion in a JSON format with key consensus. consensus must be in 2 sentences.'
     msg.append({"role": "user", "content": content})
-    # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in JSON format."})
-    # msg = ({"role": "user", "content": content})
-
     completion = client.chat.completions.create(
                     model=GROQ_MODEL,
                     messages=msg,
                     n=1)
+    print('################ Summary final verdict')
     json_out = parse_to_json(completion)
     final_verdict = json_out['consensus']
 
@@ -292,6 +291,7 @@ async def generate(request_body: OpinionGenerateRequestBody):
         print('################### Start consensus')
         final_consensus = generate_consensus(request_body.question, consensus, agent_contexts, agreements)
         print('################### Finish consensus')
+        print(final_consensus)
         yield json.dumps({"final_consensus": final_consensus})
     return StreamingResponse(generate_responses())
 
