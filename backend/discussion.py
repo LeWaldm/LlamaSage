@@ -46,7 +46,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
     agent_contexts = []
     for agent in agents:
         agent_contexts.append([
-            {"role": "system", "content": persona[agent]},
+            {"role": "system", "content": "Pretend you are " + persona[agent] + " and you behave like " + persona[agent] + " would."},
             {"role": "user", "content": question}
         ])
 
@@ -153,7 +153,7 @@ def generate_consensus(question, debate):
                     messages=msg,
                     n=1)
     json_out = completion.choices[0].message.content
-    # print(json_out)
+    print(json_out)
     
     return json_out
 
