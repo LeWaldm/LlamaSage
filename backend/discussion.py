@@ -9,8 +9,17 @@ from typing import List, Dict, AsyncGenerator
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+import networkx as nx
+from pyvis.network import Network
+from copy import deepcopy
 
 GROQ_MODEL = 'llama3-70b-8192'
+GRAPH_FILE = 'network.html'
+
+# super dirty hack to get the final states to transfer to another method without 
+# 
+AGREEMENTS_FINAL = []
+FINAL_CONTEXTS = []
 
 """
 modes
@@ -32,6 +41,42 @@ def construct_message(agents, agent_ids, contexts, question, idx):
 
     prefix_string = prefix_string + """\n\n Using the reasoning from other agents as additional advice, can you give an updated answer? Examine your solution and that other agents step by step. Put your answer in the form (X) at the end of your response.""".format(question)
     return {"role": "user", "content": prefix_string}
+
+def create_agreement_graph(agents, agreements):
+    multiplier = 5
+    edge_color = '#d57eeb'
+
+    G = nx.complete_graph(agents)
+    for a, agree in zip(agents, agreements):
+        for b, value in agree.items():
+            if a == b:
+                continue
+            G.add_edge(a,b,weight=(value-1)*multiplier + 1, color=edge_color)
+    pos = nx.spring_layout(G)
+
+    base_size = 700
+    size = max([len(v) * base_size for v in G.nodes()])
+    nx.draw_networkx_nodes(G, pos, 
+        node_size=size, 
+        node_color="skyblue") 
+
+    # Draw edges with widths proportional to weight
+    for (u, v, d) in G.edges(data=True):
+        nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], width=d['weight'] * multiplier)
+
+    # Labels
+    nx.draw_networkx_labels(G, pos)
+    edge_labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
+
+    net = Network(width='1900px', height='900px', bgcolor='#222222', font_color='white', notebook=True)
+    net.repulsion()
+    net.add_node('Plato', shape='image', image ="/Users/lewaldm/Documents/Llmama3Hackathon/depositphotos_157821304-stock-photo-classic-statue-socrates.jpg")
+    net.add_node('Immanuel Kant')
+    net.add_node('Lawyer')
+
+    net.from_nx(G)
+    net.show(GRAPH_FILE)
 
 async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict[str, str]], None]:
 
@@ -61,6 +106,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
             print(f'Round {round + 1}')
             print(f'=====================================')
             round_responses = []
+            agreements = []
             for i, agent_context in enumerate(agent_contexts):
 
                 if round != 0:
@@ -87,6 +133,22 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                 print('-----------------------------')
                 print(content)
                 round_responses.append({agents[i]: content})
+
+                # analyze agreement
+                msg_agree = {"role": "user", "content": f"For each agent of {agent_ids_other} provide a number from 1 to 5 indicating how much you agree with the statement. 1 means you strongly disagree and 5 means you strongly agree. Give the output as a python dictionary with the follwing keys {agent_ids_other}. You MUST only return a python dictionary."}
+                completion = client.chat.completions.create(
+                    model=GROQ_MODEL,
+                    messages=agent_context + [msg_agree],
+                    n=1)
+                print('############# AGREEMENT ################')
+                out = completion.choices[0].message.content
+                out = out[out.index('{'):out.index('}')+1]
+                print(out)
+                d = eval(out)
+                d[agents[i]] = 5
+                agreements.append(d)
+                print('############# AGREEMENT ################')
+            AGREEMENTS_FINAL = agreements
             yield round_responses
     else:
         raise KeyError(f"mode {mode} not implemented")
@@ -153,7 +215,13 @@ def generate_consensus(question, debate):
                     messages=msg,
                     n=1)
     json_out = completion.choices[0].message.content
-    print(json_out)
+    # print(json_out)
+
+
+    # draw final graph with agreement
+    agent_ids_copy = deepcopy(agent_ids)
+    agreements_copy = deepcopy(AGREEMENTS_FINAL)
+    create_agreement_graph(agent_ids, AGREEMENTS_FINAL)
     
     return json_out
 
