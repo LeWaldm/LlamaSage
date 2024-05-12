@@ -52,6 +52,7 @@ export default function App() {
   const [round, setRounds] = useState(0)
   const [conclusion, setConclusion] = useState('Discussion in progress...')
   const [basicModal, setBasicModal] = useState(false);
+  const [saveString, setSaveString] = useState('Save Changes');
   const toggleOpen = () => setBasicModal(!basicModal);
   const [customPersona, setCustomPersona] = useState({title: '', description: ''})
 
@@ -146,8 +147,20 @@ export default function App() {
   };
 
   const updatePersonasJson = () => {
-    personas[customPersona.title] = customPersona.description;
-    console.log('personas updated', personas);
+    setSaveString('Saving...')
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        "name": customPersona.title,
+        "description": customPersona.description,
+      })
+    };
+    fetch('http://0.0.0.0:8000/add_persona', requestOptions)
+      .then(response => {
+        setBasicModal(false);
+        setSaveString('Save Changes');
+      });
   }
 
   return (
@@ -170,32 +183,32 @@ export default function App() {
                 return (
                   <MDBCol size='3'>
                     <div className="d-flex flex-row">
-                      <img
-                        src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
-                        className='img-fluid rounded-circle'
-                        style={{height: '25px', width: '25px',marginRight: '5px'}}
-                        alt=''
-                      />
+                        <img
+                          src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                          className='img-fluid rounded-circle'
+                          style={{height: '25px', width: '25px',marginRight: '5px'}}
+                          alt=''
+                        />
                         <MDBCheckbox label={value[0]} key={index*3 + 0} onChange={e => handleChange(e, value[0])}/>
                         <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
                           <MDBPopoverHeader>{value[0]}</MDBPopoverHeader>
                           <MDBPopoverBody>{personas[value[0]]}</MDBPopoverBody>
                         </MDBPopover>
                       </div>
-                      <div className="d-flex flex-row">
-                      <img
-                        src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
-                        className='img-fluid rounded-circle'
-                        style={{height: '25px', width: '25px',marginRight: '5px'}}
-                        alt=''
-                      />
+                      {1<value.length && <div className="d-flex flex-row">
+                        <img
+                          src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                          className='img-fluid rounded-circle'
+                          style={{height: '25px', width: '25px',marginRight: '5px'}}
+                          alt=''
+                        />
                         <MDBCheckbox label={value[1]} key={index*3 + 1} onChange={e => handleChange(e, value[1])}/>
                         <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
                           <MDBPopoverHeader>{value[1]}</MDBPopoverHeader>
                           <MDBPopoverBody>{personas[value[1]]}</MDBPopoverBody>
                         </MDBPopover>
-                    </div>
-                    <div className="d-flex flex-row">
+                    </div>}
+                    {2 < value.length && <div className="d-flex flex-row">
                       <img
                         src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
                         className='img-fluid rounded-circle'
@@ -207,7 +220,7 @@ export default function App() {
                         <MDBPopoverHeader>{value[2]}</MDBPopoverHeader>
                         <MDBPopoverBody>{personas[value[2]]}</MDBPopoverBody>
                       </MDBPopover>
-                    </div>
+                    </div>}
                   </MDBCol>)
               })}
             </MDBRow>
@@ -236,7 +249,7 @@ export default function App() {
                 </MDBModalBody>
 
                 <MDBModalFooter>
-                  <MDBBtn color="success" onClick={()=>updatePersonasJson()}>Save changes</MDBBtn>
+                  <MDBBtn color="success" onClick={()=>updatePersonasJson()}>{saveString}</MDBBtn>
                 </MDBModalFooter>
               </MDBModalContent>
             </MDBModalDialog>
