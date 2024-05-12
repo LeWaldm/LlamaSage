@@ -1,11 +1,10 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useRef} from "react";
 import {
   MDBContainer,
   MDBRow,
   MDBCol,
   MDBCard,
   MDBCardBody,
-  MDBIcon,
   MDBBtn,
   MDBTypography,
   MDBTextArea,
@@ -13,7 +12,16 @@ import {
   MDBCheckbox,
   MDBPopover,
   MDBPopoverHeader,
-  MDBPopoverBody
+  MDBPopoverBody,
+  MDBCardTitle,
+  MDBCardText,
+  MDBModal,
+  MDBModalDialog,
+  MDBModalContent,
+  MDBModalHeader,
+  MDBModalTitle,
+  MDBModalBody,
+  MDBModalFooter,
 } from "mdb-react-ui-kit";
 import personas from './persona.json';
 
@@ -40,20 +48,31 @@ export default function App() {
   const [discussionStarted, setDiscussionStarted] = useState(false)
   const [activeAgents, setActiveAgents] = useState([])
   const [dilemma, setDilemma] = useState('')
+  const messagesEndRef = useRef(null)
+  const [round, setRounds] = useState(0)
+  const [conclusion, setConclusion] = useState('Discussion in progress...')
+  const [basicModal, setBasicModal] = useState(false);
+  const toggleOpen = () => setBasicModal(!basicModal);
+  const [customPersona, setCustomPersona] = useState({title: '', description: ''})
 
-  useEffect(() => {  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
     // Collect all keys or desired data from personas
     const newAgents = [];
     for (const key in personas) {
       newAgents.push(key);  // assuming you want to store the key in agents
     }
-  
-    // Set the new state once after the loop
     setAgents(newAgents);
-  }, []);  // Empty dependency array ensures this effect runs only once after the initial render
+    scrollToBottom();
+  }, [texts, conclusion, personas]);
   
 
   const startDiscussion = () => {
+    setDiscussionStarted(true);
+    setTexts([]);
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -71,6 +90,7 @@ export default function App() {
           start(controller) {
             function push() {
               reader.read().then(({ done, value }) => {
+                setRounds(round + 1)
                 if (done) {
                   controller.close();
                   return;
@@ -79,7 +99,16 @@ export default function App() {
                 // Parse the data chunk and convert it to text
                 const text = new TextDecoder().decode(value);
                 const data = JSON.parse(text);
-                console.log('aniket', data);
+                if(data.final_consensus) {
+                  setConclusion(data.final_consensus)
+                  return;
+                }
+                // loop through data array
+                data.forEach((element, index) => {
+                  setTimeout(() => {
+                    setTexts(prevTexts => [...prevTexts, {user: Object.keys(element)[0], text: element[Object.keys(element)[0]]}]);
+                  }, 2000 * (index + round));
+                });
 
                 controller.enqueue(value);
                 push();
@@ -116,16 +145,21 @@ export default function App() {
     return result;
   };
 
+  const updatePersonasJson = () => {
+    personas[customPersona.title] = customPersona.description;
+    console.log('personas updated', personas);
+  }
+
   return (
-    <MDBContainer fluid className="py-5 gradient-custom">
+    <MDBContainer fluid className="py-3 gradient-custom">
       <MDBRow className="text-center mb-3">
         <h1 >
           LlamaSage
         </h1>
       </MDBRow>
-      <MDBRow className="mb-3">
-          <MDBCol size='5'>
-              <MDBTextArea className="mb-3" label="Dilemma to ponder" id="textAreaExample" rows={7} onChange={(e)=>setDilemma(e.target.value)} />
+      <MDBRow className="mb-2">
+          <MDBCol size='6'>
+              <MDBTextArea className="mb-2" label="Dilemma to ponder" id="textAreaExample" rows={4} onChange={(e)=>setDilemma(e.target.value)} />
           </MDBCol>
           <MDBCol size='6'>
             <MDBRow>
@@ -136,22 +170,40 @@ export default function App() {
                 return (
                   <MDBCol size='3'>
                     <div className="d-flex flex-row">
-                      <MDBCheckbox label={value[0]} key={index*3 + 0} onChange={e => handleChange(e, value[0])}/>
-                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', margin: '0px'}}>
-                        <MDBPopoverHeader>{value[0]}</MDBPopoverHeader>
-                        <MDBPopoverBody>{personas[value[0]]}</MDBPopoverBody>
-                      </MDBPopover>
+                      <img
+                        src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                        className='img-fluid rounded-circle'
+                        style={{height: '25px', width: '25px',marginRight: '5px'}}
+                        alt=''
+                      />
+                        <MDBCheckbox label={value[0]} key={index*3 + 0} onChange={e => handleChange(e, value[0])}/>
+                        <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
+                          <MDBPopoverHeader>{value[0]}</MDBPopoverHeader>
+                          <MDBPopoverBody>{personas[value[0]]}</MDBPopoverBody>
+                        </MDBPopover>
+                      </div>
+                      <div className="d-flex flex-row">
+                      <img
+                        src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                        className='img-fluid rounded-circle'
+                        style={{height: '25px', width: '25px',marginRight: '5px'}}
+                        alt=''
+                      />
+                        <MDBCheckbox label={value[1]} key={index*3 + 1} onChange={e => handleChange(e, value[1])}/>
+                        <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
+                          <MDBPopoverHeader>{value[1]}</MDBPopoverHeader>
+                          <MDBPopoverBody>{personas[value[1]]}</MDBPopoverBody>
+                        </MDBPopover>
                     </div>
                     <div className="d-flex flex-row">
-                      <MDBCheckbox label={value[1]} key={index*3 + 1} onChange={e => handleChange(e, value[1])}/>
-                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', margin: '0px'}}>
-                        <MDBPopoverHeader>{value[1]}</MDBPopoverHeader>
-                        <MDBPopoverBody>{personas[value[1]]}</MDBPopoverBody>
-                      </MDBPopover>
-                    </div>
-                    <div className="d-flex flex-row">
+                      <img
+                        src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                        className='img-fluid rounded-circle'
+                        style={{height: '25px', width: '25px',marginRight: '5px'}}
+                        alt=''
+                      />
                       <MDBCheckbox label={value[2]} key={index*3 + 2} onChange={e => handleChange(e, value[2])}/>
-                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', margin: '0px'}}>
+                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
                         <MDBPopoverHeader>{value[2]}</MDBPopoverHeader>
                         <MDBPopoverBody>{personas[value[2]]}</MDBPopoverBody>
                       </MDBPopover>
@@ -161,16 +213,41 @@ export default function App() {
             </MDBRow>
           </MDBCol>
       </MDBRow>
-      <MDBRow className="text-center mb-3">
+      <MDBRow className="text-center mb-2">
         <MDBTypography>
-          <MDBBtn color="light" size="lg" rounded onClick={event => startDiscussion()}>
+          <MDBBtn style={{marginRight: '20px'}} color="light" size="lg" rounded onClick={event => startDiscussion()}>
             Start Discussion
           </MDBBtn>
+          <MDBBtn color="light" size="lg" rounded onClick={toggleOpen}>Add custom persona</MDBBtn>
+          <MDBModal open={basicModal} onClose={() => setBasicModal(false)} tabIndex='-1'>
+            <MDBModalDialog>
+              <MDBModalContent>
+                <MDBModalHeader>
+                  <MDBModalTitle>Add custom persona</MDBModalTitle>
+                  <MDBBtn className='btn-close' color='none' onClick={toggleOpen}></MDBBtn>
+                </MDBModalHeader>
+                <MDBModalBody>
+                  <MDBTextArea className="mb-3" label="Persona Title" rows={1} onChange={(e)=> setCustomPersona(persona => {
+                    return {...persona, 'title': e.target.value}
+                    })} />
+                  <MDBTextArea label="Persona Short Description" rows={4} onChange={(e)=>setCustomPersona(persona => {
+                    return {...persona, 'description': e.target.value}
+                    })} />
+                </MDBModalBody>
+
+                <MDBModalFooter>
+                  <MDBBtn color="success" onClick={()=>updatePersonasJson()}>Save changes</MDBBtn>
+                </MDBModalFooter>
+              </MDBModalContent>
+            </MDBModalDialog>
+          </MDBModal>
+
         </MDBTypography>
       </MDBRow>
-      <MDBRow style={{ height: '500px', overflow: 'scroll' }}>
+      {discussionStarted && <MDBRow>
+        <MDBCol size='8' style={{ height: '630px', overflow: 'scroll' }}>
           <MDBTypography>
-          {discussionStarted && texts.map((value, index) => {
+          {texts.map((value, index) => {
             return <li className="d-flex justify-content-between mb-4" key={index}>
               <img
                 src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
@@ -192,8 +269,22 @@ export default function App() {
               </MDBCard>
             </li>
           })}
+          <div ref={messagesEndRef} />
           </MDBTypography>
-      </MDBRow>
+        </MDBCol>
+        <MDBCol size='4'>
+          <iframe style={{width: '100%', height: '65%'}} src="network.html"></iframe>
+          <MDBCard style={{height: '35%'}}>
+            <MDBCardBody>
+              <MDBCardTitle>Conclusion</MDBCardTitle>
+              <MDBCardText>
+                {conclusion}
+              </MDBCardText>
+            </MDBCardBody>
+          </MDBCard>
+        </MDBCol>
+
+      </MDBRow>}
     </MDBContainer>
   );
 }
