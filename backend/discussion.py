@@ -17,8 +17,8 @@ from copy import deepcopy
 import os
 
 GROQ_MODEL = 'llama3-70b-8192'
-GRAPH_PATH = './backend/network.html'
-IMAGES_GRAPH_BASE_PATH = '/Users/adas/codingProjects/LlamaSage/frontend/public/thumbnails'
+GRAPH_PATH = '/Users/adas/codingProjects/LlamaSage/backend/network.html'
+IMAGES_GRAPH_BASE_PATH = '/thumbnails'
 PERSONA_FILE = '/Users/adas/codingProjects/LlamaSage/frontend/src/persona.json'
 Q_initial_system_setyp = 'You will discuss a common quesiton with other participants. The goal is to find a joint solution to the proposed question. Each of your answer should have at most 130 words.'
 Q_prior_response = """\n\nConsidering the positions from any participant of the other participants, has your opinion changed? Try to persuade a single participant of your opinion."""
@@ -300,6 +300,9 @@ async def generate(request_body: OpinionGenerateRequestBody):
 
 @app.post("/graph")
 async def get_agreement_graph():
+    if(not os.path.exists(GRAPH_PATH)):
+        print('returning early')
+        return ''
     with open(GRAPH_PATH, 'r') as file:  # r to open file in READ mode
         html_as_string = file.read()
     return html_as_string
