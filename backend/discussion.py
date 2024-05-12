@@ -12,16 +12,12 @@ from fastapi.responses import StreamingResponse
 import networkx as nx
 from pyvis.network import Network
 from copy import deepcopy
+import os
 
 GROQ_MODEL = 'llama3-70b-8192'
-GRAPH_FILE = 'network.html'
+GRAPH_PATH = 'network.html'
 IMAGES_GRAPH_BASE_PATH = '/Users/lewaldm/Documents/Llmama3Hackathon/LlamaSage/frontend/public/thumbnails/'
 PERSONA_FILE = 'persona.json'
-
-# super dirty hack to get the final states to transfer to another method without 
-# 
-AGREEMENTS_FINAL = []
-FINAL_CONTEXTS = []
 
 
 def construct_message(agents, agent_ids, contexts, question, idx):
@@ -39,6 +35,8 @@ def construct_message(agents, agent_ids, contexts, question, idx):
     return {"role": "user", "content": prefix_string}
 
 def create_agreement_graph(agents, agreements):
+    """ really messy code """
+
     multiplier = 9
     edge_color = '#d57eeb'
 
@@ -50,7 +48,7 @@ def create_agreement_graph(agents, agreements):
             G.add_edge(a,b,weight=(value-1)*multiplier + 1, color=edge_color)
     pos = nx.spring_layout(G)
 
-    base_size = 700
+    base_size = 1
     size = max([len(v) * base_size for v in G.nodes()])
     nx.draw_networkx_nodes(G, pos, 
         node_size=size, 
@@ -58,7 +56,8 @@ def create_agreement_graph(agents, agreements):
 
     # Draw edges with widths proportional to weight
     for (u, v, d) in G.edges(data=True):
-        nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], width=d['weight'] * multiplier)
+        value  = d['weight']
+        nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], width=(value-1)*multiplier + 1)
 
     # Labels
     nx.draw_networkx_labels(G, pos)
@@ -69,10 +68,16 @@ def create_agreement_graph(agents, agreements):
     net.repulsion()
 
     for agent in agents:
-        net.add_node(agent, shape='image', image = IMAGES_GRAPH_BASE_PATH + agent + '.png')
+        net.add_node(agent, shape='image', image = os.path.join(IMAGES_GRAPH_BASE_PATH, agent + '.png'))
 
     net.from_nx(G)
-    net.show(GRAPH_FILE)
+    net.show(GRAPH_PATH)
+    print('done')
+
+def parse_to_json(completion):
+    out = completion.choices[0].message.content
+    out = out[out.index('{'):out.index('}')+1]
+    return eval(out)
 
 async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict[str, str]], None]:
 
@@ -105,6 +110,7 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
             agreements = []
             for i, agent_context in enumerate(agent_contexts):
 
+                agent_ids_other = agents[:i] + agents[i+1:]
                 if round != 0:
                     agent_contexts_other = agent_contexts[:i] + agent_contexts[i+1:]
                     agent_ids_other = agents[:i] + agents[i+1:]
@@ -137,20 +143,20 @@ async def generate_opinion(question, agents, rounds) -> AsyncGenerator[List[Dict
                     messages=agent_context + [msg_agree],
                     n=1)
                 print('############# AGREEMENT ################')
-                out = completion.choices[0].message.content
-                out = out[out.index('{'):out.index('}')+1]
-                print(out)
-                d = eval(out)
+                d = parse_to_json(completion)
+                print(d)
                 d[agents[i]] = 5
                 agreements.append(d)
                 print('############# AGREEMENT ################')
-            AGREEMENTS_FINAL = agreements
-            yield round_responses
+            create_agreement_graph(agents, agreements)
+            # CONTEXTS_FINAL = agent_contexts
+            # AGREEMENTS_FINAL = agreements
+            yield round_responses, agent_contexts, agreements
     else:
         raise KeyError(f"mode {mode} not implemented")
 
 
-def generate_consensus(question, debate):
+def generate_consensus(question, debate, agent_context, agreements):
     
     # setup
     client = setup_groq()
@@ -180,28 +186,27 @@ def generate_consensus(question, debate):
         "role": "user",
         "content": content
     })
+
     completion = client.chat.completions.create(
                     model=GROQ_MODEL,
                     messages=msg,
                     n=1)
     # print('1################')
     summary = completion.choices[0].message.content
+    # msg.append({'role': 'assistant', 'content': summary})
     # print(summary)
 
     content = f'Your task is to analyze the summary of the positions of each agent and provide a final verdict of the discussion in the form reasoning and final verdict in a JSON format. You MUST return only JSON object.'
     msg.append({"role": "user", "content": content})
     # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in JSON format."})
     # msg = ({"role": "user", "content": content})
-
     completion = client.chat.completions.create(
                     model=GROQ_MODEL,
                     messages=msg,
                     n=1)
 
-    # print('2################')
-    # print(completion.choices[0].message.content)
 
-    content = f'Your task is to look at the final verdict of all agents and provide final consensus of the discussion in a JSON format. consensus must be in 2 sentences.'
+    content = f'Your task is to look at the final verdict of all agents and provide final consensus of the discussion in a JSON format with key consensus. consensus must be in 2 sentences.'
     msg.append({"role": "user", "content": content})
     # msg.append({"role": "user", "content": "Please provide a final verdict of the discussion in JSON format."})
     # msg = ({"role": "user", "content": content})
@@ -210,16 +215,47 @@ def generate_consensus(question, debate):
                     model=GROQ_MODEL,
                     messages=msg,
                     n=1)
-    json_out = completion.choices[0].message.content
-    # print(json_out)
+    json_out = parse_to_json(completion)
+    final_verdict = json_out['consensus']
 
 
     # draw final graph with agreement
-    agent_ids_copy = deepcopy(agent_ids)
-    agreements_copy = deepcopy(AGREEMENTS_FINAL)
-    create_agreement_graph(agent_ids, AGREEMENTS_FINAL)
-    
-    return json_out
+    # version 1: only very last round
+    consensus_label = 'consensus'
+    consensus_dict = {}
+    print('################ FINAL agreement start')
+    for i, agent in enumerate(agent_ids):
+        msg = [
+            agent_context[i][0], # inital system message
+            {
+                "role": "user",
+                "content": f'Please give your current opinion on the discussion with the initial question {question}.'
+            }, # fake user prompt
+            {
+                "role": "assistant",
+                "content": agent_context[-1][i]['content']
+            }, # latest answer of the agent
+            {
+                'role': 'user',
+                'content': f'The objective moderator of the discussion has summarized the positions of all agents in the following verdict: {final_verdict}. Provide a number from 1 to 5 indicating how much you agree with the final verdict. 1 means you strongly disagree and 5 means you strongly agree. Give the output as a python dictionary with the key agreement. You MUST only return a python dictionary.'
+            }
+        ]
+        completion = client.chat.completions.create(
+                model=GROQ_MODEL,
+                messages=msg,
+                n=1)
+        d = parse_to_json(completion)
+        agreements[i][consensus_label] = d['agreement']
+        consensus_dict[agent] = d['agreement']
+    print('################ FINAL agreement done')
+
+    # actually draw graph
+    print('################ FINAL graph start')
+    create_agreement_graph(agent_ids + [consensus_label], agreements + [consensus_dict])
+    print('################ FINAL graph done')
+
+    print('################ FINAL json_out')
+    return json_out['consensus']
 
 def setup_groq():
     load_dotenv()
@@ -250,10 +286,12 @@ class OpinionGenerateRequestBody(BaseModel):
 async def generate(request_body: OpinionGenerateRequestBody):
     async def generate_responses():
         consensus = []
-        async for round_response in generate_opinion(request_body.question, request_body.agents, request_body.rounds):
+        async for round_response, agent_contexts, agreements in generate_opinion(request_body.question, request_body.agents, request_body.rounds):
             yield json.dumps(round_response)
             consensus.append(round_response)
-        final_consensus = generate_consensus(request_body.question, consensus)
+        print('################### Start consensus')
+        final_consensus = generate_consensus(request_body.question, consensus, agent_contexts, agreements)
+        print('################### Finish consensus')
         yield json.dumps({"final_consensus": final_consensus})
     return StreamingResponse(generate_responses())
 
