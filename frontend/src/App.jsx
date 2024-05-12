@@ -10,7 +10,10 @@ import {
   MDBTypography,
   MDBTextArea,
   MDBCardHeader,
-  MDBCheckbox
+  MDBCheckbox,
+  MDBPopover,
+  MDBPopoverHeader,
+  MDBPopoverBody
 } from "mdb-react-ui-kit";
 import personas from './persona.json';
 
@@ -58,14 +61,32 @@ export default function App() {
         "question": "What is the meaning of life?",
         "rounds": 2,
         "agents": ["Immanuel Kant", "Lawyer"]
-    })
+      })
     };
+    
     fetch('http://0.0.0.0:8000/debate', requestOptions)
-        .then(response => response.json())
-        .then(data => {
-          console.log('aniket', data);
-        });
-    setDiscussionStarted(true)
+      .then(response => response.json())
+      .then(data => {
+        // Assuming `data` is an array of discussion points
+        let index = 0; // To keep track of the current item index
+  
+        // Function to add data with a delay
+        const addDataWithDelay = () => {
+          if (index < data.length) {
+            console.log(data[index]);
+            const newTexts = [...texts, data[index]]
+            setTexts(newTexts)
+            index++; // Move to the next item
+            setTimeout(addDataWithDelay, 1000); // Wait 1 second before adding the next item
+          } else {
+            // When all data has been added, recurse to start a new discussion
+            startDiscussion();
+          }
+        };
+  
+        addDataWithDelay(); // Start adding data with delay
+      })
+      .catch(error => console.error('Error fetching data:', error));
   }
 
   const handleChange = (e, value) => {
@@ -94,7 +115,7 @@ export default function App() {
         </h1>
       </MDBRow>
       <MDBRow className="mb-3">
-          <MDBCol size='6'>
+          <MDBCol size='5'>
               <MDBTextArea className="mb-3" label="Dilemma to ponder" id="textAreaExample" rows={7} onChange={(e)=>setDilemma(e.target.value)} />
           </MDBCol>
           <MDBCol size='6'>
@@ -105,9 +126,27 @@ export default function App() {
               {chunkArray(agents, 3).map((value, index) => {
                 return (
                   <MDBCol size='3'>
-                    <MDBCheckbox label={value[0]} key={index*3 + 0} onChange={e => handleChange(e, value[0])}/>
-                    <MDBCheckbox label={value[1]} key={index*3 + 1} onChange={e => handleChange(e, value[1])}/>
-                    <MDBCheckbox label={value[2]} key={index*3 + 2} onChange={e => handleChange(e, value[2])}/>
+                    <div className="d-flex flex-row">
+                      <MDBCheckbox label={value[0]} key={index*3 + 0} onChange={e => handleChange(e, value[0])}/>
+                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', margin: '0px'}}>
+                        <MDBPopoverHeader>{value[0]}</MDBPopoverHeader>
+                        <MDBPopoverBody>{personas[value[0]]}</MDBPopoverBody>
+                      </MDBPopover>
+                    </div>
+                    <div className="d-flex flex-row">
+                      <MDBCheckbox label={value[1]} key={index*3 + 1} onChange={e => handleChange(e, value[1])}/>
+                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', margin: '0px'}}>
+                        <MDBPopoverHeader>{value[1]}</MDBPopoverHeader>
+                        <MDBPopoverBody>{personas[value[1]]}</MDBPopoverBody>
+                      </MDBPopover>
+                    </div>
+                    <div className="d-flex flex-row">
+                      <MDBCheckbox label={value[2]} key={index*3 + 2} onChange={e => handleChange(e, value[2])}/>
+                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', margin: '0px'}}>
+                        <MDBPopoverHeader>{value[2]}</MDBPopoverHeader>
+                        <MDBPopoverBody>{personas[value[2]]}</MDBPopoverBody>
+                      </MDBPopover>
+                    </div>
                   </MDBCol>)
               })}
             </MDBRow>
