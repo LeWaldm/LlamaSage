@@ -65,28 +65,37 @@ export default function App() {
     };
     
     fetch('http://0.0.0.0:8000/debate', requestOptions)
-      .then(response => response.json())
-      .then(data => {
-        // Assuming `data` is an array of discussion points
-        let index = 0; // To keep track of the current item index
-  
-        // Function to add data with a delay
-        const addDataWithDelay = () => {
-          if (index < data.length) {
-            console.log(data[index]);
-            const newTexts = [...texts, data[index]]
-            setTexts(newTexts)
-            index++; // Move to the next item
-            setTimeout(addDataWithDelay, 1000); // Wait 1 second before adding the next item
-          } else {
-            // When all data has been added, recurse to start a new discussion
-            startDiscussion();
+      .then(response => {
+        const reader = response.body.getReader();
+        return new ReadableStream({
+          start(controller) {
+            function push() {
+              reader.read().then(({ done, value }) => {
+                if (done) {
+                  controller.close();
+                  return;
+                }
+
+                // Parse the data chunk and convert it to text
+                const text = new TextDecoder().decode(value);
+                const data = JSON.parse(text);
+                console.log('aniket', data);
+
+                controller.enqueue(value);
+                push();
+              }).catch(error => {
+                console.error('Error while reading the stream:', error);
+                controller.error(error);
+              });
+            }
+
+            push();
           }
-        };
-  
-        addDataWithDelay(); // Start adding data with delay
+        });
       })
-      .catch(error => console.error('Error fetching data:', error));
+      .catch(error => {
+        console.error('Failed to fetch:', error);
+      });
   }
 
   const handleChange = (e, value) => {
