@@ -120,7 +120,7 @@ export default function App() {
           </MDBBtn>
         </MDBTypography>
       </MDBRow>
-      {<MDBRow>
+      <MDBRow style={{ height: '500px', overflow: 'scroll' }}>
           <MDBTypography>
           {discussionStarted && texts.map((value, index) => {
             return <li className="d-flex justify-content-between mb-4" key={index}>
@@ -145,7 +145,7 @@ export default function App() {
             </li>
           })}
           </MDBTypography>
-      </MDBRow>}
+      </MDBRow>
     </MDBContainer>
   );
 }
