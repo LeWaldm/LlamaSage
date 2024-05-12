@@ -78,9 +78,9 @@ export default function App() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        "question": "What is the meaning of life?",
+        "question": dilemma,
         "rounds": 2,
-        "agents": ["Immanuel Kant", "Lawyer"]
+        "agents": activeAgents
       })
     };
     
@@ -163,6 +163,14 @@ export default function App() {
       });
   }
 
+  const getSourceImage = (agentName) => {
+    try{
+      return require(`./thumbnails/${agentName}.png`)
+    } catch {
+      return require(`./thumbnails/default.png`)
+    }
+  }
+
   return (
     <MDBContainer fluid className="py-3 gradient-custom">
       <MDBRow className="text-center mb-3">
@@ -172,19 +180,19 @@ export default function App() {
       </MDBRow>
       <MDBRow className="mb-2">
           <MDBCol size='6'>
-              <MDBTextArea className="mb-2" label="Dilemma to ponder" id="textAreaExample" rows={4} onChange={(e)=>setDilemma(e.target.value)} />
+              <MDBTextArea className="mb-2" label="Dilemma to ponder" id="textAreaExample" rows={5} onChange={(e)=>setDilemma(e.target.value)} />
           </MDBCol>
           <MDBCol size='6'>
             <MDBRow>
               <h6>Select agents for participation</h6>
             </MDBRow>
             <MDBRow>
-              {chunkArray(agents, 3).map((value, index) => {
+              {chunkArray(agents, 4).map((value, index) => {
                 return (
-                  <MDBCol size='3'>
+                  <MDBCol size='4'>
                     <div className="d-flex flex-row">
                         <img
-                          src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                           src={getSourceImage(value[0])}
                           className='img-fluid rounded-circle'
                           style={{height: '25px', width: '25px',marginRight: '5px'}}
                           alt=''
@@ -197,7 +205,7 @@ export default function App() {
                       </div>
                       {1<value.length && <div className="d-flex flex-row">
                         <img
-                          src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                           src={getSourceImage(value[1])}
                           className='img-fluid rounded-circle'
                           style={{height: '25px', width: '25px',marginRight: '5px'}}
                           alt=''
@@ -210,7 +218,7 @@ export default function App() {
                     </div>}
                     {2 < value.length && <div className="d-flex flex-row">
                       <img
-                        src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/avatar-6.webp"
+                         src={getSourceImage(value[2])}
                         className='img-fluid rounded-circle'
                         style={{height: '25px', width: '25px',marginRight: '5px'}}
                         alt=''
@@ -219,6 +227,19 @@ export default function App() {
                       <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
                         <MDBPopoverHeader>{value[2]}</MDBPopoverHeader>
                         <MDBPopoverBody>{personas[value[2]]}</MDBPopoverBody>
+                      </MDBPopover>
+                    </div>}
+                    {3 < value.length && <div className="d-flex flex-row">
+                      <img
+                         src={getSourceImage(value[3])}
+                        className='img-fluid rounded-circle'
+                        style={{height: '25px', width: '25px',marginRight: '5px'}}
+                        alt=''
+                      />
+                      <MDBCheckbox label={value[3]} key={index*3 + 2} onChange={e => handleChange(e, value[2])}/>
+                      <MDBPopover dismiss color='secondary' btnChildren='?' placement='top' style={{ height: '15px', width: '15px', padding: '0px', marginLeft: '5px'}}>
+                        <MDBPopoverHeader>{value[3]}</MDBPopoverHeader>
+                        <MDBPopoverBody>{personas[value[3]]}</MDBPopoverBody>
                       </MDBPopover>
                     </div>}
                   </MDBCol>)
@@ -296,7 +317,6 @@ export default function App() {
             </MDBCardBody>
           </MDBCard>
         </MDBCol>
-
       </MDBRow>}
     </MDBContainer>
   );
