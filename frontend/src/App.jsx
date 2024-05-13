@@ -345,7 +345,7 @@ export default function App() {
         </MDBTypography>
       </MDBRow>
       {discussionStarted && <MDBRow>
-        <MDBCol size='8' style={{ height: '630px', overflow: 'scroll' }}>
+        <MDBCol size='8' style={{ height: '640px', overflow: 'scroll' }}>
           <MDBTypography>
           {texts.map((value, index) => {
             return <li className="d-flex justify-content-between mb-4" key={index}>
@@ -373,8 +373,8 @@ export default function App() {
           </MDBTypography>
         </MDBCol>
         <MDBCol size='4'>
-          <iframe ref={iframeRef} style={{width: '100%', height: '65%'}}></iframe>
-          <MDBCard style={{height: '35%'}}>
+          <iframe ref={iframeRef} style={{width: '100%', height: '64%'}}></iframe>
+          <MDBCard style={{height: '37%'}}>
             <MDBCardBody>
               <MDBCardTitle>Conclusion</MDBCardTitle>
               <MDBCardText>

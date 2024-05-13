@@ -78,7 +78,11 @@ def create_agreement_graph(agents, agreements):
     net.repulsion()
 
     for agent in agents:
-        net.add_node(agent, shape='image', image = os.path.join(IMAGES_GRAPH_BASE_PATH, agent + '.png'))
+        print(os.path.join('/Users/adas/codingProjects/LlamaSage/frontend/public/thumbnails', agent + '.png'))
+        if os.path.exists(os.path.join('/Users/adas/codingProjects/LlamaSage/frontend/public/thumbnails', agent + '.png')):
+            net.add_node(agent, shape='image', image = os.path.join(IMAGES_GRAPH_BASE_PATH,  agent + '.png'))
+        else:
+            net.add_node(agent, shape='image', image = os.path.join(IMAGES_GRAPH_BASE_PATH, 'Default.png'))
 
     net.from_nx(G)
     net.show(GRAPH_PATH)
